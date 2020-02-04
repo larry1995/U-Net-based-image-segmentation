@@ -6,6 +6,8 @@ import glob
 import skimage.io as io
 import skimage.transform as trans
 from skimage import img_as_uint
+from skimage import img_as_ubyte
+
 from PIL import Image
 from skimage.io import imread
 import cv2
@@ -15,7 +17,7 @@ import cv2
 
 def histoequalization(image_path,num_image):
     for i in range(num_image):
-        img = io.imread(os.path.join(image_path,"%d.tif"%(i+1)),as_gray=True)
+        img = io.imread(os.path.join(image_path,"%d.tif"%i),as_gray=True)
         hist,bins = np.histogram(img.flatten(),256,[0,256])
 
         cdf = hist.cumsum()
@@ -32,7 +34,8 @@ def histoequalization(image_path,num_image):
         cdf = np.ma.filled(cdf_m,0).astype('uint8')
         img2 = cdf[img]
         print("image normalized")
-        cv2.imwrite('data/membrane/train/training_normalized/%d.tif"%(i+1)',img2)
+        cv2.imwrite('data/membrane/train/raw_histo/%d.tif'%i,img2)
+        #io.imsave(os.path.join(save_path,"%d.tif"%i),result_img)
         #plt.subplot(1,3,2)
         #plt.imshow(img2)
         #plt.subplot(1,3,3)
@@ -114,10 +117,10 @@ def trainGenerator(batch_size,train_path,image_folder,mask_folder,aug_dict,image
         yield (img,mask)
 
 def validationGenerator(batch_size,vali_path,image_folder,mask_folder,image_color_mode = "grayscale",target_size=(512,512)):
-    vali_image_datagen = ImageDataGenerator(rotation_range=0.2)
-    vali_mask_datagen = ImageDataGenerator(rotation_range=0.2)
-    #vali_image_datagen = ImageDataGenerator(rescale = 1./255)
-    #vali_mask_datagen = ImageDataGenerator(rescale=1./255)
+    #vali_image_datagen = ImageDataGenerator(rotation_range=0.2)
+    #vali_mask_datagen = ImageDataGenerator(rotation_range=0.2)
+    vali_image_datagen = ImageDataGenerator(rescale = 1./255)
+    vali_mask_datagen = ImageDataGenerator(rescale=1./255)
     vali_image_generator = vali_image_datagen.flow_from_directory(
         vali_path,
         classes = [image_folder],
@@ -158,13 +161,13 @@ def validationGenerator(batch_size,vali_path,image_folder,mask_folder,image_colo
 
     
 
-def testGenerator(test_path,num_image =20,target_size = (512,512),flag_multi_class = False,as_gray = True):
+def testGenerator(test_path,num_image =23,target_size = (512,512),flag_multi_class = False,as_gray = True):
     #test_datagen = ImageDataGenerator(rescale=1./255)
     for i in range(num_image):
         img = io.imread(os.path.join(test_path,"%d.tif"%i),as_gray = as_gray)
-        img = img / 255.0
+        #img = img / 255.0
         img = trans.resize(img,target_size)
-        img = np.reshape(img,img.shape+(1,)) 
+        img = np.reshape(img,img.shape+(1,)) if (not flag_multi_class) else img
         img = np.reshape(img,(1,)+img.shape)
         yield img
 
@@ -195,22 +198,22 @@ def labelVisualize(num_class,color_dict,img):
 
 
 
-def saveResult(save_path,npyfile,size=(512,512),flag_multi_class = False,num_class = 2,threshold=127):
+def saveResult(save_path,npyfile,size=(512,512),flag_multi_class = False,num_class = 2,threshold=1256):
     for i,item in enumerate(npyfile):
-
         img = labelVisualize(num_class,COLOR_DICT,item) if flag_multi_class else item[:,:,0]
-        
+        #img = img_as_ubyte(img)
+        #img_at_mean = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY,10,10)
         print("Images created")
-        io.imsave(os.path.join(save_path,"%d_predict.png"%i), img_as_uint(img)) ##save csv##
- 
+        
 
-#y_predict = []     # store all the generated data batches
-#y_label = []   # store all the generated label batches
-#max_iter = 1050  # maximum number of iterations, in each iteration one batch is generated; the proper value depends on batch size and size of whole data
-#i = 0
-#for d, l in testGenerator:
-    #y_predict.append(d)
-    #y_label.append(l)
-    #i += 1
-    #if i == max_iter:
-        #break  
+        io.imsave(os.path.join(save_path,"%d_predict.png"%i), img_as_uint(img)) ##save csv
+        #io.imsave(os.path.join(save_path,"%d_predict.tif"%i), img_as_btype(img)) 
+def post_processing(image_path,save_path,img_num):
+    for i in range(img_num):
+    #img = io.imread(os.path.join("C:\\Users\\hcntb\\Desktop\\testdta_0.5_0.4_10_150\\testdata","%d_%s.png"%(i,"predict")),as_gray=True)
+        img = io.imread(os.path.join(image_path,"%d_%s.png"%(i,"predict")),as_gray=True)
+        img=img_as_ubyte(img)
+    #gray_img= cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        ret, result_img = cv2.threshold(img, 0, 255, cv2.THRESH_OTSU)
+        io.imsave(os.path.join(save_path,"%d_result.png"%i),result_img)
+print("The images are processed")
