@@ -12,7 +12,7 @@ from tensorflow.keras import backend as keras
 
 
 
-def unet(pretrained_weights = None,input_size = (512,512, 1),nb_epoch=9):
+def unet(pretrained_weights = None,input_size = (512,512, 1)):
     inputs = Input(input_size)
     conv1 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(inputs)
     
@@ -60,8 +60,8 @@ def unet(pretrained_weights = None,input_size = (512,512, 1),nb_epoch=9):
     #model.summary()
     
     
-    model.compile(optimizer = SGD(lr=0.1, decay= 0.01/nb_epoch, momentum=0.9, nesterov=True), loss = 'binary_crossentropy', metrics = ['accuracy'])
-    
+    #model.compile(optimizer = SGD(lr=0.1, decay= 0.01/nb_epoch, momentum=0.9, nesterov=True), loss = 'binary_crossentropy', metrics = ['accuracy'])
+    model.compile(optimizer = SGD(lr=0.01, decay= 0.1, momentum=0.9, nesterov=True), loss = 'binary_crossentropy', metrics = ['accuracy'])
     
     #model.summary()
 
