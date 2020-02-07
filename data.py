@@ -91,6 +91,8 @@ def trainGenerator(batch_size,train_path,image_folder,mask_folder,aug_dict,image
     '''
     image_datagen = ImageDataGenerator(**aug_dict)
     mask_datagen = ImageDataGenerator(**aug_dict)
+    #image_datagen = ImageDataGenerator(rescale = 1./255)
+    #mask_datagen = ImageDataGenerator(rescale=1./255)
     image_generator = image_datagen.flow_from_directory(
         train_path,
         classes = [image_folder],
@@ -198,7 +200,7 @@ def labelVisualize(num_class,color_dict,img):
 
 
 
-def saveResult(save_path,npyfile,size=(512,512),flag_multi_class = False,num_class = 2,threshold=1256):
+def saveResult(save_path,npyfile,size=(512,512),flag_multi_class = False,num_class = 2,threshold=127):
     for i,item in enumerate(npyfile):
         img = labelVisualize(num_class,COLOR_DICT,item) if flag_multi_class else item[:,:,0]
         #img = img_as_ubyte(img)

@@ -29,24 +29,28 @@ data_gen_args = dict(
 #image_normalized('data/membrane/train/masks_ilker','data/membrane/train/new_mask')
 
 #histoequalization('data/membrane/raw',20)
-myGene = trainGenerator(3,'data/membrane/train','raw','mitochondria',data_gen_args,save_to_dir ="data/membrane/train/augment")
+myGene = trainGenerator(5,'data/membrane/train','raw','mitochondria',data_gen_args,save_to_dir ="data/membrane/train/augment")
 vali = validationGenerator(5,'data/membrane/validation','testing','testing_groundtruth')
 
 
  
 model = unet()
-earlyStopping=EarlyStopping(monitor='val_loss', patience=80, verbose=1, mode='auto')
-filepath="weights.best.hdf5"
+#earlyStopping=EarlyStopping(monitor='val_loss', patience=80, verbose=1, mode='auto')
+filepath="weights_best.hdf5"
 
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True,mode='max')
-callbacks_list = [checkpoint]
+#callbacks_list = [checkpoint]
 #earlyStopping=keras.callbacks.EarlyStopping(monitor='val_loss', patience=0, verbose=1, mode='auto')
 
 #model_checkpoint = ModelCheckpoint(monitor='val_acc',verbose=1, save_best_only=True)
-#history = model.fit_generator(myGene,steps_per_epoch=35,epochs=100,verbose = 1,validation_data= vali,validation_steps=5,class_weight = [0.9,0.1],max_queue_size = 1)
-history = model.fit_generator(myGene,steps_per_epoch=9,epochs=130,verbose = 1,validation_data= vali,validation_steps=5,max_queue_size = 1,callbacks=[checkpoint])
-#history = model.fit_generator(myGene,steps_per_epoch=10,epochs=130,verbose = 1,validation_data= vali,class_weight=[0.9,0.1],validation_steps=5,max_queue_size = 1)
-
+#history = model.fit_generator(myGene,steps_per_epoch=10,epochs=100,verbose = 1,validation_data= vali,validation_steps=5,max_queue_size = 1)
+#history = model.fit_generator(myGene,steps_per_epoch=9,epochs=130,validation_data= vali,validation_steps=5,max_queue_size = 1,verbose = 1)
+history = model.fit_generator(myGene,steps_per_epoch=10,epochs=200,verbose = 1,validation_data= vali,class_weight = [1.3,0.7],validation_steps=5,max_queue_size = 1)
+model.save('trained.h5')
+print("Second Training")
+model = load_model('weights_best.hdf5')
+#model = load_model('trained.h5')
+model.fit_generator(myGene,steps_per_epoch=10,epochs=130,verbose = 1,validation_data= vali,class_weight = [1.3,0.7],validation_steps=5,max_queue_size = 1)
 testGene = testGenerator("data/membrane/055_HIPPO")
 #results = model.predict_generator(testGene,11,verbose=1)
 results = model.predict_generator(testGene,23,verbose=1)
@@ -54,4 +58,4 @@ results = model.predict_generator(testGene,23,verbose=1)
 
 
 saveResult("data/membrane/055_HIPPO",results)
-post_processing("data/membrane/055_HIPPO","data/membrane/testdata_processed",21) 
+post_processing("data/membrane/055_HIPPO","data/membrane/testdata_processed",23) 
